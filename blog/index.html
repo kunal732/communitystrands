@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog | Community Strands</title>
+  <style>
+    :root {
+      --bg: #0d0d14; --text: #cdd6f4; --text-muted: #6c7086;
+      --text-dim: #9399b2; --accent: #F05138; --border: #1e1e2e;
+      --card-bg: #111119; --code-bg: #181825; --link: #89b4fa;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; font-size: 15px; line-height: 1.65; }
+    header { border-bottom: 1px solid var(--border); padding: 0 2rem; height: 56px; display: flex; align-items: center; gap: 1rem; background: rgba(17,17,25,0.92); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 100; }
+    .logo { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; color: var(--text); font-weight: 700; font-size: 15px; }
+    .logo-icon { width: 30px; height: 30px; background: var(--accent); border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 15px; color: white; font-weight: 800; }
+    header nav { margin-left: auto; display: flex; gap: 1.25rem; }
+    header nav a { color: var(--text-dim); text-decoration: none; font-size: 13px; }
+    header nav a:hover { color: var(--text); }
+
+    main { max-width: 720px; margin: 0 auto; padding: 3rem 2rem 5rem; }
+    h1 { font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; color: #fff; }
+    .subtitle { color: var(--text-dim); margin-bottom: 2.5rem; }
+
+    .post-card { border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1.25rem; background: var(--code-bg); transition: border-color 0.15s; }
+    .post-card:hover { border-color: rgba(240,81,56,0.4); }
+    .post-meta { display: flex; gap: 1rem; margin-bottom: 0.5rem; font-size: 12.5px; color: var(--text-muted); flex-wrap: wrap; }
+    .post-title { font-size: 1.15rem; font-weight: 700; color: #e2e2f0; text-decoration: none; display: block; margin-bottom: 0.4rem; }
+    .post-title:hover { color: var(--accent); }
+    .post-desc { font-size: 13.5px; color: var(--text-dim); line-height: 1.6; margin-bottom: 0.75rem; }
+    .post-tags { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .post-tag { font-size: 11px; font-weight: 500; background: rgba(137,180,250,0.08); color: #89b4fa; border: 1px solid rgba(137,180,250,0.2); padding: 2px 8px; border-radius: 4px; }
+
+    .contribute { margin-top: 2.5rem; padding: 1.25rem 1.5rem; background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px; }
+    .contribute h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.4rem; color: #e2e2f0; }
+    .contribute p { font-size: 13.5px; color: var(--text-dim); margin: 0; line-height: 1.6; }
+    .contribute a { color: var(--link); }
+
+    .error { color: #f38ba8; font-size: 14px; padding: 2rem 0; }
+  </style>
+</head>
+<body>
+<header>
+  <a class="logo" href="../">
+    <div class="logo-icon">S</div>
+    <span>Community Strands</span>
+  </a>
+  <nav>
+    <a href="../">Home</a>
+    <a href="../swift/">Swift SDK</a>
+    <a href="https://github.com/kunal732/communitystrands" target="_blank">GitHub</a>
+  </nav>
+</header>
+
+<main>
+  <h1>Blog</h1>
+  <p class="subtitle">Updates, guides, and posts from the community across all Strands ports.</p>
+  <div id="posts"><p style="color:var(--text-muted);font-size:14px">Loading posts...</p></div>
+</main>
+
+<script>
+const REPO   = "kunal732/communitystrands";
+const BRANCH = "master";
+const RAW    = `https://raw.githubusercontent.com/${REPO}/${BRANCH}`;
+
+async function load() {
+  const el = document.getElementById("posts");
+  try {
+    const res = await fetch(`${RAW}/blog/index.json`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const { posts } = await res.json();
+    if (!posts.length) { el.innerHTML = "<p style='color:var(--text-muted)'>No posts yet.</p>"; return; }
+
+    el.innerHTML = posts.map(p => {
+      const date = new Date(p.date).toLocaleDateString("en-US", { year:"numeric", month:"long", day:"numeric" });
+      const tags = (p.tags||[]).map(t => `<span class="post-tag">${t}</span>`).join("");
+      return `
+        <div class="post-card">
+          <div class="post-meta"><span>${date}</span><span>by ${p.author}</span></div>
+          <a class="post-title" href="post.html?slug=${p.slug}">${p.title}</a>
+          <p class="post-desc">${p.description}</p>
+          <div class="post-tags">${tags}</div>
+        </div>`;
+    }).join("") + `
+      <div class="contribute">
+        <h3>Write for the blog</h3>
+        <p>Posts about any community Strands port are welcome. Open a pull request adding a markdown file to
+        <a href="https://github.com/${REPO}/tree/${BRANCH}/blog/posts" target="_blank"><code>blog/posts/</code></a>
+        and an entry to <a href="https://github.com/${REPO}/blob/${BRANCH}/blog/index.json" target="_blank"><code>blog/index.json</code></a>.
+        Posts are reviewed before merging.</p>
+      </div>`;
+  } catch(e) {
+    el.innerHTML = `<p class="error">Could not load posts: ${e.message}</p>`;
+  }
+}
+document.addEventListener("DOMContentLoaded", load);
+</script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+name: Sync Swift SDK docs
+
+on:
+  # Run manually from the Actions tab
+  workflow_dispatch:
+  # Run on a daily schedule to pick up Swift SDK changes automatically
+  schedule:
+    - cron: '0 4 * * *'   # 4am UTC daily
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout communitystrands
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout Swift SDK docs
+        uses: actions/checkout@v4
+        with:
+          repository: kunal732/strands-agents-swift
+          path: _swift-sdk
+
+      - name: Sync docs to swift/
+        run: |
+          rsync -av --delete \
+            --exclude='blog.html' \
+            --exclude='blog-post.html' \
+            _swift-sdk/docs/ swift/
+          rm -rf _swift-sdk
+
+      - name: Commit if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add swift/
+          git diff --cached --quiet || git commit -m "Sync Swift SDK docs [automated]"
+          git push

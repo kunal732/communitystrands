@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Community Strands</title>
+  <style>
+    :root {
+      --bg: #0d0d14;
+      --text: #cdd6f4;
+      --text-muted: #6c7086;
+      --text-dim: #9399b2;
+      --accent: #F05138;
+      --border: #1e1e2e;
+      --card-bg: #111119;
+      --link: #89b4fa;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      font-size: 15px; line-height: 1.65; min-height: 100vh;
+    }
+
+    /* Header */
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 56px;
+      display: flex; align-items: center; gap: 1rem;
+      background: rgba(17,17,25,0.92);
+      backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .logo { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; color: var(--text); font-weight: 700; font-size: 15px; }
+    .logo-icon { width: 30px; height: 30px; background: var(--accent); border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 15px; color: white; font-weight: 800; }
+    header nav { margin-left: auto; display: flex; gap: 1.25rem; align-items: center; }
+    header nav a { color: var(--text-dim); text-decoration: none; font-size: 13px; transition: color 0.15s; }
+    header nav a:hover { color: var(--text); }
+
+    /* Hero */
+    .hero {
+      max-width: 860px; margin: 0 auto;
+      padding: 5rem 2rem 4rem;
+      text-align: center;
+    }
+    .hero-badge {
+      display: inline-block; font-size: 11px; font-weight: 600;
+      background: rgba(240,81,56,0.12); color: var(--accent);
+      border: 1px solid rgba(240,81,56,0.25);
+      padding: 3px 10px; border-radius: 999px; letter-spacing: 0.06em;
+      text-transform: uppercase; margin-bottom: 1.5rem;
+    }
+    .hero h1 {
+      font-size: 3rem; font-weight: 800; letter-spacing: -0.03em;
+      line-height: 1.1; margin-bottom: 1rem; color: #fff;
+    }
+    .hero h1 span { color: var(--accent); }
+    .hero p {
+      font-size: 1.1rem; color: var(--text-dim); max-width: 540px;
+      margin: 0 auto 2rem; line-height: 1.65;
+    }
+    .hero-actions { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.65rem 1.35rem; border-radius: 7px;
+      font-size: 14px; font-weight: 600; text-decoration: none;
+      transition: opacity 0.15s, transform 0.12s;
+    }
+    .btn:hover { opacity: 0.85; transform: translateY(-1px); }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+
+    /* SDKs section */
+    .section { max-width: 860px; margin: 0 auto; padding: 3rem 2rem; }
+    .section-label {
+      font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--text-muted); margin-bottom: 1.25rem;
+    }
+    .sdk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
+    .sdk-card {
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: 12px; padding: 1.5rem;
+      text-decoration: none; display: block;
+      transition: border-color 0.15s, transform 0.12s;
+      position: relative;
+    }
+    .sdk-card:hover { border-color: rgba(240,81,56,0.45); transform: translateY(-2px); }
+    .sdk-card.coming-soon { opacity: 0.55; pointer-events: none; }
+    .sdk-icon { font-size: 1.75rem; margin-bottom: 0.75rem; }
+    .sdk-card h3 { font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 0.3rem; }
+    .sdk-card p { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin: 0; }
+    .sdk-badge {
+      position: absolute; top: 1rem; right: 1rem;
+      font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 4px;
+    }
+    .badge-active { background: rgba(166,227,161,0.12); color: #a6e3a1; border: 1px solid rgba(166,227,161,0.25); }
+    .badge-soon   { background: rgba(249,226,175,0.1);  color: #f9e2af; border: 1px solid rgba(249,226,175,0.2); }
+
+    /* Divider */
+    .divider { border: none; border-top: 1px solid var(--border); max-width: 860px; margin: 0 auto; }
+
+    /* Footer */
+    footer {
+      text-align: center; padding: 2.5rem 2rem;
+      font-size: 12.5px; color: var(--text-muted);
+      border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--text-muted); text-decoration: none; }
+    footer a:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="/">
+    <div class="logo-icon">S</div>
+    <span>Community Strands</span>
+  </a>
+  <nav>
+    <a href="blog/">Blog</a>
+    <a href="https://github.com/strands-agents" target="_blank">Official SDK</a>
+    <a href="https://github.com/kunal732/communitystrands" target="_blank">GitHub</a>
+  </nav>
+</header>
+
+<div class="hero">
+  <div class="hero-badge">Open Source</div>
+  <h1>Community ports of<br><span>Strands Agents</span></h1>
+  <p>AWS Strands Agents SDK implemented by the community for platforms the official SDK does not cover. Same concepts, native code.</p>
+  <div class="hero-actions">
+    <a class="btn btn-primary" href="swift/">Get Started with Swift →</a>
+    <a class="btn btn-secondary" href="blog/">Read the Blog</a>
+  </div>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <div class="section-label">Available SDKs</div>
+  <div class="sdk-grid">
+
+    <a class="sdk-card" href="swift/">
+      <span class="sdk-badge badge-active">Available</span>
+      <div class="sdk-icon">🍎</div>
+      <h3>Swift</h3>
+      <p>Full feature parity for macOS and iOS. On-device MLX inference, hybrid routing, and OpenTelemetry built in.</p>
+    </a>
+
+    <div class="sdk-card coming-soon">
+      <span class="sdk-badge badge-soon">Coming soon</span>
+      <div class="sdk-icon">🤖</div>
+      <h3>Kotlin</h3>
+      <p>Native Android and JVM implementation. Same agent loop, same tool macros, Kotlin idioms throughout.</p>
+    </div>
+
+    <div class="sdk-card coming-soon">
+      <span class="sdk-badge badge-soon">Coming soon</span>
+      <div class="sdk-icon">🦀</div>
+      <h3>Rust</h3>
+      <p>Zero-cost abstractions, no runtime. For systems, embedded, and WebAssembly targets.</p>
+    </div>
+
+  </div>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <div class="section-label">From the Blog</div>
+  <div id="recent-posts" style="color: var(--text-muted); font-size:14px">Loading...</div>
+  <a href="blog/" style="display:inline-block;margin-top:1rem;font-size:13px;color:var(--link);text-decoration:none;font-weight:500">All posts →</a>
+</div>
+
+<footer>
+  <p>Community implementations of <a href="https://github.com/strands-agents" target="_blank">AWS Strands Agents</a>. Not affiliated with Amazon Web Services.</p>
+  <p style="margin-top:0.4rem">Apache 2.0 Licensed &nbsp;·&nbsp; <a href="https://github.com/kunal732/communitystrands" target="_blank">GitHub</a> &nbsp;·&nbsp; <a href="blog/">Blog</a></p>
+</footer>
+
+<script>
+const RAW = "https://raw.githubusercontent.com/kunal732/communitystrands/master";
+
+async function loadRecentPosts() {
+  const el = document.getElementById("recent-posts");
+  try {
+    const res = await fetch(`${RAW}/blog/index.json`);
+    const { posts } = await res.json();
+    const recent = posts.slice(0, 3);
+    el.innerHTML = recent.map(p => {
+      const date = new Date(p.date).toLocaleDateString("en-US", { year:"numeric", month:"long", day:"numeric" });
+      return `
+        <div style="padding:1rem 0;border-bottom:1px solid var(--border)">
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:0.3rem">${date}</div>
+          <a href="blog/post.html?slug=${p.slug}" style="font-size:1rem;font-weight:600;color:#e2e2f0;text-decoration:none">${p.title}</a>
+          <p style="font-size:13px;color:var(--text-dim);margin:0.3rem 0 0">${p.description}</p>
+        </div>`;
+    }).join("");
+  } catch {
+    el.textContent = "Could not load posts.";
+  }
+}
+
+document.addEventListener("DOMContentLoaded", loadRecentPosts);
+</script>
+</body>
+</html>
