@@ -10,7 +10,7 @@ So we built a Swift port.
 
 ## What it is
 
-The Strands Agents Swift SDK is a community implementation of the Strands framework for Apple platforms. It targets full feature parity with the Python and TypeScript SDKs while adding capabilities that only make sense on Apple hardware.
+The Strands Agents Swift SDK is a community implementation of the Strands framework for Apple platforms. It implements the same core agent concepts as the Python and TypeScript SDKs while adding capabilities that only make sense on Apple hardware.
 
 The core is a Swift 6 package that runs on macOS 14+, iOS 17+, and tvOS 17+. It has no runtime dependencies beyond Foundation for the core module. Cloud provider modules bring in their respective SDKs only if you add them.
 
@@ -84,7 +84,7 @@ The Python and TypeScript SDKs assume a server. The Swift SDK assumes a device. 
 
 ## What is coming
 
-The SDK is at feature parity with the Python and TypeScript SDKs for agent fundamentals. The areas we are actively working on:
+The SDK covers the core agent fundamentals. The areas we are actively working on:
 
 - **Kotlin port.** Same design, same feature set, targeting Android and JVM.
 - **Better routing signals.** Prompt complexity classification, not just character count. Cost tracking across a session.
