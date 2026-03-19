@@ -1,11 +1,12 @@
 name: Sync Swift SDK docs
 
 on:
-  # Run manually from the Actions tab
   workflow_dispatch:
-  # Run on a daily schedule to pick up Swift SDK changes automatically
   schedule:
     - cron: '0 4 * * *'   # 4am UTC daily
+
+permissions:
+  contents: write
 
 jobs:
   sync:
@@ -35,5 +36,6 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add swift/
-          git diff --cached --quiet || git commit -m "Sync Swift SDK docs [automated]"
+          git diff --cached --quiet && echo "No changes" && exit 0
+          git commit -m "Sync Swift SDK docs [automated]"
           git push
