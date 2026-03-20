@@ -91,13 +91,27 @@ function buildSidebar() {
   if (!sidebar) return;
   const currentPage = window.location.pathname.split("/").pop() || "index.html";
   const currentHash = window.location.hash;
+
+  const hasActiveHash = currentHash && NAV.some(s =>
+    s.items.some(i => {
+      const [p, h] = i.href.split("#");
+      return p === currentPage && h && `#${h}` === currentHash;
+    })
+  );
+
   let html = "";
   for (const section of NAV) {
     html += `<div class="nav-section"><div class="nav-section-label">${section.label}</div>`;
     for (const item of section.items) {
       const [page, hash] = item.href.split("#");
-      // Active only if page matches AND either the item has no hash or the hash matches
-      const active = page === currentPage && (!hash || `#${hash}` === currentHash) ? " active" : "";
+      let active = "";
+      if (page === currentPage) {
+        if (hash) {
+          active = `#${hash}` === currentHash ? " active" : "";
+        } else {
+          active = !hasActiveHash ? " active" : "";
+        }
+      }
       const sub = item.sub ? " sub" : "";
       html += `<a class="nav-item${sub}${active}" href="${item.href}">${item.title}</a>`;
     }
@@ -142,3 +156,5 @@ document.addEventListener("DOMContentLoaded", () => {
   buildTOC();
   if (typeof hljs !== "undefined") hljs.highlightAll();
 });
+
+window.addEventListener("hashchange", buildSidebar);
