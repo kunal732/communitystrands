@@ -2,8 +2,7 @@ const NAV = [
   {
     label: "Community Strands",
     items: [
-      { title: "← Home", href: "../" },
-      { title: "Blog",   href: "../blog/" },
+      { title: "Home", href: "https://communitystrands.com/swift/" },
     ],
   },
   {
