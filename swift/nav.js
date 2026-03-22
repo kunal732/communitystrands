@@ -35,8 +35,7 @@ const NAV = [
   {
     label: "Voice Agents",
     items: [
-      { title: "Cloud Backends", href: "voice-agents.html" },
-      { title: "On-Device (MLX)", href: "voice-agents.html#local", sub: true },
+      { title: "Voice Agents (Coming Soon)", href: "voice-agents.html" },
     ],
   },
   {
