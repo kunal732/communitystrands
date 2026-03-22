@@ -38,146 +38,46 @@
     <article>
       <div class="breadcrumb"><a href="index.html">Home</a><span class="breadcrumb-sep">›</span>Voice Agents</div>
       <h1>Voice Agents</h1>
-      <p class="page-description">Real-time bidirectional voice conversation. Audio flows in from the microphone and out to the speaker simultaneously, with tool calling in between.</p>
+      <p class="page-description">Real-time bidirectional voice conversation with tool calling. Coming soon.</p>
 
-      <h2 id="overview">Overview</h2>
-      <p>Voice agents use the <code>StrandsBidiStreaming</code> module, which provides a <code>BidiAgent</code> that manages an audio session with persistent duplex streaming. Unlike text agents, voice agents maintain a single long-lived connection to the model where audio chunks flow continuously in both directions.</p>
+      <div class="callout callout-note">
+        <span class="callout-icon">🚧</span>
+        <div class="callout-body">
+          <p><strong>This feature is in active development.</strong> The infrastructure for voice agents is built -- <code>BidiAgent</code>, <code>NovaSonicModel</code>, <code>OpenAIRealtimeModel</code>, <code>GeminiLiveModel</code>, and the local MLX pipeline all exist in the SDK. We are working through platform-specific audio session issues before marking this stable for production use.</p>
+        </div>
+      </div>
+
+      <h2 id="what-is-coming">What's coming</h2>
 
       <div class="flow">
         <div class="flow-row">
           <span class="flow-node blue">Microphone</span>
-          <span class="flow-arrow">→ audio chunks →</span>
+          <span class="flow-arrow">→ audio →</span>
           <span class="flow-node">BidiAgent</span>
-          <span class="flow-arrow">→ audio response →</span>
+          <span class="flow-arrow">→ audio →</span>
           <span class="flow-node green">Speaker</span>
         </div>
-        <div class="flow-row" style="margin-top: 0.4rem; margin-left: 13.5rem;">
+        <div class="flow-row" style="margin-top:0.4rem; margin-left:11rem;">
           <span class="flow-arrow">↕</span>
         </div>
-        <div class="flow-row" style="margin-left: 11.5rem;">
-          <span class="flow-node purple">Tools</span>
-          <span class="flow-label" style="margin-left: 0.5rem;">(called mid-conversation)</span>
+        <div class="flow-row" style="margin-left:9rem;">
+          <span class="flow-node purple">MCP Tools</span>
+          <span class="flow-label" style="margin-left:0.5rem;">(desktop control, APIs, etc.)</span>
         </div>
       </div>
 
-      <h2 id="cloud-backends">Cloud Backends</h2>
-      <p>Cloud backends connect to a hosted speech model over WebSocket or a proprietary real-time protocol. The model handles speech-to-text, reasoning, and text-to-speech in a single round trip.</p>
-
-      <h3 id="openai-realtime">OpenAI Realtime</h3>
-      <div class="code-block">
-        <div class="code-header"><span class="code-label">OpenAI Realtime API</span><span class="code-lang">Swift</span></div>
-        <pre><code class="language-swift">import StrandsBidiStreaming
-
-/// Get the current time.
-@Tool func currentTime() -> String { ISO8601DateFormatter().string(from: Date()) }
-
-let agent = BidiAgent(
-    model: OpenAIRealtimeModel(model: "gpt-4o-realtime-preview"),
-    tools: [currentTime],
-    config: BidiSessionConfig(
-        voice: "alloy",
-        systemPrompt: "You are a helpful voice assistant."
-    )
-)
-
-try await agent.start()
-
-// Send mic audio
-Task {
-    for await chunk in mic.audioStream {
-        try await agent.send(.audio(chunk, format: .openAI))
-    }
-}
-
-// Receive and play responses
-for try await event in agent.receive() {
-    switch event {
-    case .audio(let data, _):
-        speaker.play(data)
-    case .transcript(let text):
-        print("Agent said: \(text)")
-    case .toolUse(let use):
-        print("Calling tool: \(use.name)")
-    default:
-        break
-    }
-}</code></pre>
-      </div>
-
-      <h3 id="nova-sonic">AWS Nova Sonic</h3>
-      <div class="code-block">
-        <div class="code-header"><span class="code-label">AWS Nova Sonic</span><span class="code-lang">Swift</span></div>
-        <pre><code class="language-swift">import StrandsBidiStreaming
-
-let agent = BidiAgent(
-    model: NovaSonicModel(config: NovaSonicConfig(
-        region: "us-east-1",
-        voice: "tiffany"
-    )),
-    tools: [myTools],
-    config: BidiSessionConfig(systemPrompt: "You are a voice assistant.")
-)
-
-try await agent.start()
-// same send/receive pattern as above</code></pre>
-      </div>
-
-      <h3 id="gemini-live">Google Gemini Live</h3>
-      <div class="code-block">
-        <div class="code-header"><span class="code-label">Gemini Live API</span><span class="code-lang">Swift</span></div>
-        <pre><code class="language-swift">import StrandsBidiStreaming
-
-let agent = BidiAgent(
-    model: GeminiLiveModel(model: "gemini-2.0-flash-live-001"),
-    config: BidiSessionConfig(voice: "Puck")
-)
-try await agent.start()</code></pre>
-      </div>
-
-      <h2 id="local">On-Device Voice (MLX)</h2>
-      <span class="badge badge-local">Apple Silicon only</span>
-      <p style="margin-top: 0.75rem;">Run the full voice pipeline on-device: STT, LLM, and TTS all on Apple Silicon. No network required after the initial model download.</p>
-
-      <div class="code-block">
-        <div class="code-header"><span class="code-label">Fully local voice agent</span><span class="code-lang">Swift</span></div>
-        <pre><code class="language-swift">import StrandsMLXBidiProvider
-
-// Load models (downloaded from HuggingFace and cached locally)
-let sttModel = try await MLXSTTProcessor.load(model: glmASRModel)
-let ttsModel = try await MLXTTSProcessor.load(model: sopranoModel)
-
-let agent = MLXBidiFactory.createAgent(
-    llmProcessor: MLXLLMProcessor(modelId: "mlx-community/Qwen3-8B-4bit"),
-    sttProcessor: sttModel,
-    ttsProcessor: ttsModel,
-    tools: [currentTime, calculator],
-    systemPrompt: "You are a helpful on-device assistant."
-)
-
-try await agent.start()
-// same send/receive pattern</code></pre>
-      </div>
-
-      <h3 id="local-pipeline">Local Pipeline Components</h3>
+      <h2 id="planned-backends">Planned backends</h2>
       <table>
-        <thead><tr><th>Component</th><th>Role</th><th>Example model</th></tr></thead>
+        <thead><tr><th>Backend</th><th>Status</th></tr></thead>
         <tbody>
-          <tr><td><code>MLXSTTProcessor</code></td><td>Speech to text</td><td>GLM ASR, Parakeet</td></tr>
-          <tr><td><code>MLXLLMProcessor</code></td><td>Language model + tools</td><td>Qwen3-8B-4bit</td></tr>
-          <tr><td><code>MLXTTSProcessor</code></td><td>Text to speech</td><td>Soprano, Marvis</td></tr>
+          <tr><td>AWS Nova Sonic</td><td>Blocked on HTTP/2 bidi stream support in AWS SDK for Swift</td></tr>
+          <tr><td>OpenAI Realtime</td><td>In progress</td></tr>
+          <tr><td>Google Gemini Live</td><td>In progress</td></tr>
+          <tr><td>On-device MLX (STT + LLM + TTS)</td><td>In progress -- audio session issues in menu bar context</td></tr>
         </tbody>
       </table>
 
-      <h2 id="supported-backends">Supported Backends</h2>
-      <table>
-        <thead><tr><th>Backend</th><th>Module</th><th>Platform</th></tr></thead>
-        <tbody>
-          <tr><td>OpenAI Realtime</td><td><code>StrandsBidiStreaming</code></td><td>macOS, iOS</td></tr>
-          <tr><td>AWS Nova Sonic</td><td><code>StrandsBidiStreaming</code></td><td>macOS, iOS</td></tr>
-          <tr><td>Google Gemini Live</td><td><code>StrandsBidiStreaming</code></td><td>macOS, iOS</td></tr>
-          <tr><td>MLX (local)</td><td><code>StrandsMLXBidiProvider</code></td><td>macOS Apple Silicon</td></tr>
-        </tbody>
-      </table>
+      <p>Follow progress on <a href="https://github.com/kunal732/strands-agents-swift" target="_blank">GitHub</a> or <a href="../blog/">the blog</a> for updates.</p>
 
       <div class="page-nav">
         <a class="prev" href="multi-agent-a2a.html"><span class="nav-dir">← Previous</span><span class="nav-title">Agent-to-Agent (A2A)</span></a>
