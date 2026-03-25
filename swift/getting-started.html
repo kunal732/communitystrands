@@ -47,31 +47,27 @@
         <pre><code class="language-swift">dependencies: [
     .package(
         url: "https://github.com/kunal732/strands-agents-swift.git",
-        branch: "main"
+        branch: "master"
     )
 ]</code></pre>
       </div>
 
-      <p>Then add the modules your target needs. At minimum you need <code>StrandsAgents</code> (core) plus a provider:</p>
+      <p>Then add <code>StrandsAgents</code> to your target. All providers, observability, and voice streaming are included -- no separate imports needed:</p>
       <div class="code-block">
         <div class="code-header"><span class="code-label">Package.swift</span><span class="code-lang">Swift</span></div>
         <pre><code class="language-swift">.target(
     name: "MyApp",
     dependencies: [
-        .product(name: "StrandsAgents",         package: "strands-agents-swift"),
-        .product(name: "StrandsBedrockProvider", package: "strands-agents-swift"),
+        .product(name: "StrandsAgents", package: "strands-agents-swift"),
     ]
 )</code></pre>
       </div>
-
-      <p>See the <a href="modules.html">Modules</a> page for a full list of available packages.</p>
 
       <h2 id="quickstart">Quick Start</h2>
       <p>The simplest possible agent: no tools, just a model and a prompt.</p>
       <div class="code-block">
         <div class="code-header"><span class="code-label">main.swift</span><span class="code-lang">Swift</span></div>
         <pre><code class="language-swift">import StrandsAgents
-import StrandsBedrockProvider
 
 let provider = try BedrockProvider(config: BedrockConfig(
     modelId: "us.anthropic.claude-sonnet-4-20250514-v1:0"
@@ -79,39 +75,31 @@ let provider = try BedrockProvider(config: BedrockConfig(
 
 let agent = Agent(model: provider)
 let result = try await agent.run("What is the capital of France?")
-print(result.output)  // "Paris"</code></pre>
+print(result.message.textContent ?? "")  // "Paris"</code></pre>
       </div>
 
       <h2 id="adding-tools">Adding Tools</h2>
-      <p>Use the <code>@Tool</code> macro to give your agent capabilities. The macro generates the JSON schema and boilerplate automatically from the function signature:</p>
+      <p>Write a normal Swift function, wrap it with <code>Tool()</code> and a description. The tool name and parameter schema are inferred automatically:</p>
       <div class="code-block">
         <div class="code-header"><span class="code-label">main.swift</span><span class="code-lang">Swift</span></div>
-        <pre><code class="language-swift">/// Count the number of words in a block of text.
-@Tool
-func wordCount(text: String) -> Int {
+        <pre><code class="language-swift">func wordCount(text: String) -> Int {
     text.split(whereSeparator: \.isWhitespace).count
 }
+let wordCountTool = Tool(wordCount, "Count the number of words in a block of text.")
 
-/// Look up the current weather for a city.
-@Tool
-func getWeather(city: String, unit: String = "celsius") -> String {
-    // call your weather API here
+func getWeather(city: String) -> String {
     return "22°C, partly cloudy in \(city)"
 }
+let getWeatherTool = Tool(getWeather, "Look up the current weather for a city.")
 
-let agent = Agent(model: provider, tools: [wordCount, getWeather])
+let agent = Agent(model: provider, tools: [wordCountTool, getWeatherTool])
 let result = try await agent.run("How many words are in 'Hello world'? Also, what's the weather in Tokyo?")
-print(result.output)</code></pre>
-      </div>
-
-      <div class="callout callout-note">
-        <span class="callout-icon">ℹ️</span>
-        <div class="callout-body"><p><strong>Xcode app targets:</strong> If your project uses Swift 6 strict concurrency, add <code>nonisolated</code> before each <code>@Tool</code> function and <code>import Combine</code> if using <code>@Published</code>. See the <a href="tools.html#tool-macro">Tools</a> page for details.</p></div>
+print(result.message.textContent ?? "")</code></pre>
       </div>
 
       <div class="callout callout-tip">
         <span class="callout-icon">💡</span>
-        <div class="callout-body"><p>The doc comment above the function becomes the tool description the model sees. Write clear, verb-led descriptions for best results.</p></div>
+        <div class="callout-body"><p>Your functions stay regular Swift functions -- you can still call them directly without going through the agent.</p></div>
       </div>
 
       <h2 id="streaming">Streaming responses</h2>
@@ -140,7 +128,7 @@ print(result.output)</code></pre>
         <a class="card" href="tools.html">
           <div class="card-icon">🔧</div>
           <h3>Tools</h3>
-          <p>Full <code>@Tool</code> reference and manual conformance.</p>
+          <p>Tool() API, inline tools, and manual conformance.</p>
         </a>
         <a class="card" href="providers.html">
           <div class="card-icon">☁️</div>
