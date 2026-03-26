@@ -41,22 +41,26 @@
       <p class="page-description">Every agent needs a model. Swap providers without changing any agent code. They all implement the same <code>ModelProvider</code> protocol.</p>
 
       <h2 id="overview">Overview</h2>
+      <p>The SDK ships two providers, both safe to use in shipped apps:</p>
       <table>
-        <thead><tr><th>Provider</th><th>Module</th><th>Auth</th><th>Platform</th></tr></thead>
+        <thead><tr><th>Provider</th><th>Auth</th><th>Where it runs</th></tr></thead>
         <tbody>
-          <tr><td><a href="#bedrock">AWS Bedrock</a></td><td><code>StrandsBedrockProvider</code></td><td>Cognito / IAM</td><td>macOS, iOS</td></tr>
-          <tr><td><a href="#anthropic">Anthropic</a></td><td><code>StrandsAnthropicProvider</code></td><td><code>ANTHROPIC_API_KEY</code></td><td>macOS, iOS</td></tr>
-          <tr><td><a href="#openai">OpenAI</a></td><td><code>StrandsOpenAIProvider</code></td><td><code>OPENAI_API_KEY</code></td><td>macOS, iOS</td></tr>
-          <tr><td><a href="#gemini">Google Gemini</a></td><td><code>StrandsGeminiProvider</code></td><td><code>GOOGLE_API_KEY</code></td><td>macOS, iOS</td></tr>
-          <tr><td><a href="#mlx">MLX (local)</a></td><td><code>StrandsMLXProvider</code></td><td>None</td><td>macOS Apple Silicon</td></tr>
+          <tr><td><a href="#bedrock">AWS Bedrock</a></td><td>Cognito / IAM (temporary, scoped)</td><td>Cloud</td></tr>
+          <tr><td><a href="#mlx">MLX (local)</a></td><td>None</td><td>On-device, Apple Silicon</td></tr>
         </tbody>
       </table>
+      <div class="callout callout-note">
+        <span class="callout-icon">ℹ️</span>
+        <div class="callout-body">
+          <p>Providers that require embedding a permanent API key (Anthropic, OpenAI, Gemini) are intentionally not included. Embedding a permanent secret in a binary is a security risk for shipped iOS and macOS apps -- the key can be extracted and used to run up your bill or access your account. Bedrock uses temporary Cognito credentials; MLX runs fully on-device.</p>
+        </div>
+      </div>
 
       <h2 id="bedrock">AWS Bedrock</h2>
       <p>Uses the AWS Bedrock ConverseStream API. Supports Claude, Titan, Llama, Mistral, and any model available in your AWS region.</p>
       <div class="code-block">
         <div class="code-header"><span class="code-label">Development (IAM credentials from environment)</span><span class="code-lang">Swift</span></div>
-        <pre><code class="language-swift">import StrandsBedrockProvider
+        <pre><code class="language-swift">import StrandsAgents
 
 let provider = try BedrockProvider(config: BedrockConfig(
     modelId: "us.anthropic.claude-sonnet-4-20250514-v1:0",
@@ -88,64 +92,11 @@ let provider = try BedrockProvider(config: BedrockConfig(
         </tbody>
       </table>
 
-      <h2 id="anthropic">Anthropic</h2>
-      <p>Direct calls to the Anthropic Messages API. No additional AWS dependencies.</p>
-      <div class="code-block">
-        <div class="code-header"><span class="code-lang">Swift</span></div>
-        <pre><code class="language-swift">import StrandsAnthropicProvider
-
-// From an explicit key
-let provider = AnthropicProvider(config: AnthropicConfig(
-    apiKey: "sk-ant-...",
-    model: "claude-sonnet-4-5-20251001"
-))
-
-// From environment variable ANTHROPIC_API_KEY
-let provider = AnthropicProvider()</code></pre>
-      </div>
-
-      <h2 id="openai">OpenAI</h2>
-      <p>Uses the OpenAI Chat Completions API. Compatible with any OpenAI-compatible endpoint (Groq, Together AI, local Ollama, etc.).</p>
-      <div class="code-block">
-        <div class="code-header"><span class="code-lang">Swift</span></div>
-        <pre><code class="language-swift">import StrandsOpenAIProvider
-
-// OpenAI
-let provider = OpenAIProvider(config: OpenAIConfig(
-    apiKey: "sk-...",
-    model: "gpt-4o"
-))
-
-// Groq (OpenAI-compatible)
-let provider = OpenAIProvider(config: OpenAIConfig(
-    apiKey: "gsk_...",
-    model: "llama-3.3-70b-versatile",
-    baseURL: URL(string: "https://api.groq.com/openai/v1")!
-))
-
-// From environment variable OPENAI_API_KEY
-let provider = OpenAIProvider()</code></pre>
-      </div>
-
-      <h2 id="gemini">Google Gemini</h2>
-      <div class="code-block">
-        <div class="code-header"><span class="code-lang">Swift</span></div>
-        <pre><code class="language-swift">import StrandsGeminiProvider
-
-let provider = GeminiProvider(config: GeminiConfig(
-    apiKey: "AIza...",
-    model: "gemini-2.0-flash"
-))
-
-// From environment variable GOOGLE_API_KEY
-let provider = GeminiProvider()</code></pre>
-      </div>
-
       <h2 id="mlx">MLX (Local)</h2>
-      <p>Runs a quantized language model entirely on Apple Silicon. See the <a href="local-inference.html">Local Inference</a> page for full details including recommended models and hybrid routing.</p>
+      <p>Runs a quantized language model entirely on Apple Silicon. No network, no credentials, no cost. Models download from HuggingFace and cache locally on first run. See the <a href="local-inference.html">Local Inference</a> page for recommended models and hybrid routing.</p>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">Swift</span></div>
-        <pre><code class="language-swift">import StrandsMLXProvider
+        <pre><code class="language-swift">import StrandsAgents
 
 let provider = MLXProvider(modelId: "mlx-community/Qwen3-8B-4bit")
 let agent = Agent(model: provider)</code></pre>
