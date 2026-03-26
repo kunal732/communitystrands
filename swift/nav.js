@@ -43,9 +43,6 @@ const NAV = [
     items: [
       { title: "Overview",       href: "providers.html" },
       { title: "AWS Bedrock",    href: "providers.html#bedrock",    sub: true },
-      { title: "Anthropic",      href: "providers.html#anthropic",  sub: true },
-      { title: "OpenAI",         href: "providers.html#openai",     sub: true },
-      { title: "Google Gemini",  href: "providers.html#gemini",     sub: true },
       { title: "MLX (Local)",    href: "providers.html#mlx",        sub: true },
     ],
   },
