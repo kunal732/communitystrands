@@ -110,16 +110,19 @@ let agent = Agent(
       </div>
 
       <h3 id="built-in-policies">Built-in policies</h3>
-      <p>Choose the policy that matches your app's priorities:</p>
       <table>
-        <thead><tr><th>Policy</th><th>Routes to local when...</th></tr></thead>
+        <thead><tr><th>Policy</th><th>Best for</th></tr></thead>
         <tbody>
-          <tr><td><code>AlwaysCloudPolicy</code></td><td>Never. Default when no policy specified.</td></tr>
-          <tr><td><code>AlwaysLocalPolicy</code></td><td>Always.</td></tr>
-          <tr><td><code>LatencySensitivePolicy</code></td><td>Device is not critically throttled, prompt is not too long, and either a low-latency hint is set, privacy is requested, or the device is plugged in with nominal thermal state.</td></tr>
-          <tr><td><code>FallbackPolicy</code></td><td>Device thermal is below serious, free memory exceeds the threshold, deep reasoning is not requested, and the last inference was not too slow.</td></tr>
+          <tr><td><code>AlwaysCloudPolicy</code></td><td>Cloud only. Default when no policy is specified.</td></tr>
+          <tr><td><code>AlwaysLocalPolicy</code></td><td>Local only. Useful for fully offline apps.</td></tr>
+          <tr><td><code>LatencySensitivePolicy</code></td><td>Most apps. Prefers cloud by default but routes locally when the user requests low latency or privacy, or when the device is plugged in and not throttled.</td></tr>
+          <tr><td><code>FallbackPolicy</code></td><td>Local-first apps. Prefers local by default and only falls back to cloud when the device is throttled, low on memory, or the previous local inference was too slow.</td></tr>
         </tbody>
       </table>
+      <div class="callout callout-tip">
+        <span class="callout-icon">💡</span>
+        <div class="callout-body"><p>Not sure which to pick? Start with <code>LatencySensitivePolicy</code> -- it's the recommended general-purpose option. Use <code>FallbackPolicy</code> if local inference is your default and cloud is the safety net.</p></div>
+      </div>
 
       <h3 id="routing-hints">Routing hints</h3>
       <p><code>agent.routingHints</code> is read on every call. Set it before <code>run()</code> or <code>stream()</code> to influence the routing decision:</p>
@@ -180,28 +183,15 @@ DeviceCapabilities.isPluggedInProvider = {
         </div>
       </div>
 
-      <h3 id="last-latency">Last inference latency</h3>
-      <p>On the second and subsequent cycles of a conversation, policies also receive the latency of the previous model call. <code>FallbackPolicy</code> uses this to fall back to cloud if the local model is running slowly:</p>
-      <div class="code-block">
-        <div class="code-header"><span class="code-lang">Swift</span></div>
-        <pre><code class="language-swift">context.lastInferenceLatencyMs  // Int? — nil on first call, ms on subsequent calls
-
-// FallbackPolicy defaults: fall back to cloud if last call exceeded 5 seconds
-FallbackPolicy(slowInferenceThresholdMs: 5000, minimumMemoryGB: 1.5)</code></pre>
-      </div>
-
-      <h3 id="prompt-tokens">Estimated prompt tokens</h3>
-      <p>A rough token estimate (character count / 4) is computed automatically and available to all policies. Use it to avoid sending very long contexts to local models:</p>
-      <div class="code-block">
-        <div class="code-header"><span class="code-lang">Swift</span></div>
-        <pre><code class="language-swift">context.estimatedPromptTokens  // Int — rough estimate, updated each cycle
-
-// LatencySensitivePolicy defaults: route cloud if prompt exceeds 2000 estimated tokens
-LatencySensitivePolicy(minimumMemoryGBOnBattery: 2.0, maxLocalPromptTokens: 2000)</code></pre>
-      </div>
-
       <h3 id="custom-policy">Writing a custom policy</h3>
       <p>Conform to <code>RoutingPolicy</code> and implement one method. Return <code>true</code> to use local inference, <code>false</code> to use cloud.</p>
+      <p>The full <code>RoutingContext</code> is available to your policy, including:</p>
+      <ul style="margin: 0.5rem 0 1rem 1.5rem; color: var(--text-dim); font-size: 14px; line-height: 2;">
+        <li><code>context.deviceCapabilities</code> -- thermal state, free memory, power source, Neural Engine</li>
+        <li><code>context.estimatedPromptTokens</code> -- rough token estimate (character count / 4), useful for routing long contexts to cloud</li>
+        <li><code>context.lastInferenceLatencyMs</code> -- latency of the previous model call in ms (nil on first call), useful for falling back if local is running slowly</li>
+        <li><code>context.hints</code> -- the <code>RoutingHints</code> set by the caller</li>
+      </ul>
       <div class="code-block">
         <div class="code-header"><span class="code-label">Example: route by prompt length + thermal state</span><span class="code-lang">Swift</span></div>
         <pre><code class="language-swift">struct SmartPolicy: RoutingPolicy {
@@ -271,20 +261,20 @@ let agent = Agent(
       <p>Local inference supports tool calling via the MLX Swift LM tool call generation. Define tools the same way as with cloud providers:</p>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">Swift</span></div>
-        <pre><code class="language-swift">/// Get today's date and time.
-func getCurrentTime() -> String {
+        <pre><code class="language-swift">func getCurrentTime() -> String {
     ISO8601DateFormatter().string(from: Date())
 }
+let getCurrentTimeTool = Tool(getCurrentTime, "Get today's date and time.")
 
-/// Evaluate a mathematical expression.
 func evaluate(expression: String) -> String {
     let result = NSExpression(format: expression).expressionValue(with: nil, context: nil)
     return "\(result ?? "error")"
 }
+let evaluateTool = Tool(evaluate, "Evaluate a mathematical expression.")
 
 let agent = Agent(
     model: MLXProvider(modelId: "mlx-community/Qwen3-8B-4bit"),
-    tools: [getCurrentTime, evaluate]
+    tools: [getCurrentTimeTool, evaluateTool]
 )
 
 let result = try await agent.run("What day of the week is it, and what is 17 * 23?")
