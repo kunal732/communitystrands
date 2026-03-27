@@ -62,7 +62,20 @@
           <span class="flow-node green">5. Return result</span>
         </div>
       </div>
-      <p>The loop is bounded by <code>maxCycles</code> (default: 10) to prevent runaway execution.</p>
+      <p>The loop is bounded by <code>maxCycles</code> (default: 10) to prevent runaway execution. Each cycle is one model call plus any tool calls the model requests. For a simple question with no tools, the loop runs once. For a multi-step task that calls several tools, each tool-call round is one cycle.</p>
+      <p>Increase <code>maxCycles</code> for complex tasks. Decrease it for quick queries where you want to limit cost and latency:</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Swift</span></div>
+        <pre><code class="language-swift">// Simple Q&A -- one model call is enough
+let agent = Agent(model: provider, maxCycles: 1)
+
+// Complex task with many tool calls
+let agent = Agent(model: provider, tools: desktopTools, maxCycles: 20)
+
+// Check how many cycles actually ran
+let result = try await agent.run("Do something complex")
+print("Ran \(result.metrics.cycleCount) cycles")</code></pre>
+      </div>
 
       <h2 id="creating-an-agent">Creating an Agent</h2>
       <p>The <code>Agent</code> initializer accepts a model provider and optional configuration:</p>
