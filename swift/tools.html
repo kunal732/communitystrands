@@ -113,59 +113,6 @@ let searchWebTool = Tool(searchWeb, "Search the web and return a summary of the 
         <div class="callout-body"><p>Make your tools <code>async</code> whenever they perform I/O (network, disk) so concurrent execution is truly parallel rather than serialized.</p></div>
       </div>
 
-      <h2 id="manual-conformance">Manual Conformance</h2>
-      <p>For complex input decoding, dynamic schemas, or reuse across targets, you can conform to <code>AgentTool</code> directly:</p>
-      <div class="code-block">
-        <div class="code-header"><span class="code-label">Manual AgentTool conformance</span><span class="code-lang">Swift</span></div>
-        <pre><code class="language-swift">struct WordCount: AgentTool {
-    let name = "word_count"
-
-    var toolSpec: ToolSpec {
-        ToolSpec(
-            name: name,
-            description: "Count the number of words in text.",
-            inputSchema: [
-                "type": "object",
-                "properties": [
-                    "text": [
-                        "type": "string",
-                        "description": "The text to count words in"
-                    ]
-                ],
-                "required": ["text"],
-            ]
-        )
-    }
-
-    func call(toolUse: ToolUseBlock, context: ToolContext) async throws -> ToolResultBlock {
-        let text = toolUse.input["text"]?.foundationValue as? String ?? ""
-        let count = text.split(whereSeparator: \.isWhitespace).count
-        return ToolResultBlock(
-            toolUseId: toolUse.toolUseId,
-            status: .success,
-            content: [.text("\(count)")]
-        )
-    }
-}
-
-let agent = Agent(model: provider, tools: [WordCount()])</code></pre>
-      </div>
-
-      <h2 id="tool-context">Tool Context</h2>
-      <p>The <code>ToolContext</code> passed to <code>call(toolUse:context:)</code> provides access to the agent's state, session, and observability span. Useful for tools that need to call the agent recursively or log structured data:</p>
-      <div class="code-block">
-        <div class="code-header"><span class="code-lang">Swift</span></div>
-        <pre><code class="language-swift">func call(toolUse: ToolUseBlock, context: ToolContext) async throws -> ToolResultBlock {
-    context.span?.setAttribute("query", toolUse.input["query"]?.foundationValue as? String ?? "")
-    // use context.agentState to read/write shared state
-    return ToolResultBlock(
-        toolUseId: toolUse.toolUseId,
-        status: .success,
-        content: [.text("done")]
-    )
-}</code></pre>
-      </div>
-
       <h2 id="mcp-tools">MCP Tool Providers</h2>
       <p>The SDK supports the <a href="https://modelcontextprotocol.io" target="_blank">Model Context Protocol (MCP)</a>. Connect any MCP server as a tool provider and all its tools become available to the agent automatically:</p>
       <div class="code-block">
