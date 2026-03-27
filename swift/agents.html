@@ -104,7 +104,7 @@ let assistantAgent = Agent(
         <div class="code-header"><span class="code-lang">Swift</span></div>
         <pre><code class="language-swift">let result = try await agent.run("Explain async/await in Swift")
 
-print(result.output)           // the final text response
+print(result.message.textContent)           // the final text response
 print(result.usage.inputTokens)  // tokens consumed
 print(result.metrics.cycleCount) // how many reasoning cycles ran</code></pre>
       </div>
@@ -137,7 +137,7 @@ print(result.metrics.cycleCount) // how many reasoning cycles ran</code></pre>
 
 _ = try await agent.run("My name is Alex.")
 let result = try await agent.run("What's my name?")
-print(result.output)  // "Your name is Alex."
+print(result.message.textContent)  // "Your name is Alex."
 
 // Inspect or clear history
 print(agent.messages.count)
@@ -148,8 +148,7 @@ agent.clearHistory()</code></pre>
       <p>Use <code>runStructured()</code> when you need the model to return a specific Swift type instead of free-form text. See the <a href="structured-output.html">Structured Output</a> page for details.</p>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">Swift</span></div>
-        <pre><code class="language-swift">@StructuredOutput
-struct WeatherReport {
+        <pre><code class="language-swift">struct WeatherReport {
     let city: String
     let temperature: Double
     let condition: String

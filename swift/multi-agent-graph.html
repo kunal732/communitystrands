@@ -120,7 +120,7 @@ let graph = GraphOrchestrator(nodes: [
 ])
 
 let result = try await graph.run("Review this draft: \(userDraft)")
-print(result.output)  // editor's synthesized feedback</code></pre>
+print(result.message.textContent)  // editor's synthesized feedback</code></pre>
       </div>
 
       <h2 id="chaining">Chaining Stages</h2>
@@ -215,7 +215,7 @@ print(result.output)  // editor's synthesized feedback</code></pre>
 ])
 
 let result = try await graph.run("Analyze and improve this draft: \(userDraft)")
-print(result.output)</code></pre>
+print(result.message.textContent)</code></pre>
       </div>
 
       <h2 id="parallel-execution">Parallel Execution</h2>
@@ -232,7 +232,7 @@ print(result.output)</code></pre>
         <div class="code-header"><span class="code-lang">Swift</span></div>
         <pre><code class="language-swift">let result = try await graph.run("Analyze and improve this draft: \(userDraft)")
 
-print(result.output)  // final node's output (export summary)
+print(result.message.textContent)  // final node's output (export summary)
 
 // Surface individual analyses in the UI
 print(result.nodeOutputs["grammar"]  ?? "")  // grammar corrections

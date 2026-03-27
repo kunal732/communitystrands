@@ -40,19 +40,16 @@
       <h1>Tools</h1>
       <p class="page-description">Tools give agents the ability to act: look things up, call APIs, run code, read files. The model decides which tools to call and when.</p>
 
-      <h2 id="tool-function">@Tool Macro</h2>
-      <p>The <code>@Tool</code> macro is the primary way to define a tool. Attach it to any Swift function and the compiler generates the JSON schema, tool name, and <code>AgentTool</code> conformance automatically.</p>
+      <h2 id="tool-function">Tool() API</h2>
+      <p>Write a normal Swift function, wrap it with <code>Tool()</code> and a description. The tool name and parameter schema are inferred automatically from the description.</p>
 
       <div class="code-block">
-        <div class="code-header"><span class="code-label">Defining tools with @Tool</span><span class="code-lang">Swift</span></div>
-        <pre><code class="language-swift">/// Count the number of words in a block of text.
-@Tool
-func wordCount(text: String) -> Int {
+        <div class="code-header"><span class="code-label">Defining tools</span><span class="code-lang">Swift</span></div>
+        <pre><code class="language-swift">func wordCount(text: String) -> Int {
     text.split(whereSeparator: \.isWhitespace).count
 }
+let wordCountTool = Tool(wordCount, "Count the number of words in a block of text.")
 
-/// Evaluate a mathematical expression and return the result.
-@Tool
 func calculator(expression: String) -> String {
     guard let result = NSExpression(format: expression)
         .expressionValue(with: nil, context: nil) else {
@@ -60,33 +57,15 @@ func calculator(expression: String) -> String {
     }
     return "\(result)"
 }
+let calculatorTool = Tool(calculator, "Evaluate a mathematical expression and return the result.")
 
-let agent = Agent(model: provider, tools: [wordCount, calculator])</code></pre>
+let agent = Agent(model: provider, tools: [wordCountTool, calculatorTool])</code></pre>
       </div>
 
-      <div class="callout callout-warn">
-        <span class="callout-icon">⚠️</span>
-        <div class="callout-body">
-          <p><strong>Xcode app targets with Swift 6 strict concurrency:</strong> Global functions in an app target are implicitly <code>@MainActor</code>-isolated. The <code>@Tool</code> wrapper calls your function from a non-main-actor context, which causes a compiler error. Fix it by marking the function <code>nonisolated</code>:</p>
-          <pre style="margin-top:0.75rem"><code class="language-swift">@Tool
-nonisolated func wordCount(text: String) -> Int {
-    text.split(whereSeparator: \.isWhitespace).count
-}</code></pre>
-          <p style="margin-top:0.5rem">This is not needed in Swift packages or when strict concurrency is off.</p>
-        </div>
-      </div>
-
-      <h3 id="what-the-macro-generates">What the macro generates</h3>
-      <p>For each annotated function, the macro creates two things:</p>
-      <ul>
-        <li>A struct conforming to <code>AgentTool</code> with the JSON schema derived from the parameter types</li>
-        <li>A <code>let</code> binding with the same name as the function that you pass to <code>Agent(tools:)</code></li>
-      </ul>
-      <p>The function itself is unchanged. You can still call it directly as a regular Swift function:</p>
+      <p>Your functions stay regular Swift functions -- you can still call them directly:</p>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">Swift</span></div>
-        <pre><code class="language-swift">// Still callable as a plain Swift function
-let count = wordCount(text: "hello world")  // 2</code></pre>
+        <pre><code class="language-swift">let count = wordCount(text: "hello world")  // 2</code></pre>
       </div>
 
       <h3 id="type-mapping">Type mapping</h3>

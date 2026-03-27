@@ -113,7 +113,7 @@ let swarm = SwarmOrchestrator(
 )
 
 let result = try await swarm.run("Schedule a team lunch for Friday at noon")
-print(result.output)</code></pre>
+print(result.message.textContent)</code></pre>
       </div>
 
       <h2 id="handoffs">Handoffs</h2>
@@ -182,7 +182,7 @@ let swarm = SwarmOrchestrator(
 )
 
 let result = try await swarm.run("I feel sore today. Should I work out or rest?")
-print(result.output)</code></pre>
+print(result.message.textContent)</code></pre>
       </div>
 
       <h2 id="vs-graph">Swarm vs. Graph</h2>

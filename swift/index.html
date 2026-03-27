@@ -75,23 +75,22 @@
       <div class="code-block">
         <div class="code-header"><span class="code-label">main.swift</span><span class="code-lang">Swift</span></div>
         <pre><code class="language-swift">import StrandsAgents
-import StrandsBedrockProvider
 
 /// Count the number of words in a block of text.
-@Tool
 func wordCount(text: String) -> Int {
     text.split(whereSeparator: \.isWhitespace).count
 }
+let wordCountTool = Tool(wordCount, "Count the number of words in a block of text.")
 
 let agent = Agent(
     model: try BedrockProvider(config: BedrockConfig(
         modelId: "us.anthropic.claude-sonnet-4-20250514-v1:0"
     )),
-    tools: [wordCount]
+    tools: [wordCountTool]
 )
 
 let result = try await agent.run("How many words are in the Gettysburg Address?")
-print(result.output)</code></pre>
+print(result.message.textContent)</code></pre>
       </div>
 
       <h2>Platform Support</h2>

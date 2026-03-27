@@ -71,7 +71,6 @@
         <pre><code class="language-swift">import StrandsAgents
 
 /// Process a long document and return a structured summary.
-@Tool
 func processDocument(content: String) async throws -> String {
     // heavy document processing; appropriate for a backend server
     return "Summary: ..."
@@ -116,7 +115,7 @@ let onDeviceAgent = Agent(
 )
 
 let result = try await onDeviceAgent.run("Summarize the 200-page contract I just uploaded")
-print(result.output)</code></pre>
+print(result.message.textContent)</code></pre>
       </div>
 
       <h2 id="cross-language">Working with Your Backend Team</h2>

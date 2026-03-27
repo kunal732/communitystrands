@@ -69,7 +69,7 @@ let restoredManager = RepositorySessionManager(sessionId: "user-123", repository
 let restoredAgent = Agent(model: provider, sessionManager: restoredManager)
 
 let result = try await restoredAgent.run("What's my name?")
-print(result.output)  // "Your name is Alex."</code></pre>
+print(result.message.textContent)  // "Your name is Alex."</code></pre>
       </div>
 
       <h2 id="s3-storage">S3 Storage</h2>
