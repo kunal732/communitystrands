@@ -75,6 +75,33 @@ print(result.message.textContent)  // "7,006,652"</code></pre>
         <div class="callout-body"><p>The <code>qwen3_5</code> architecture is not yet supported in the current MLX Swift LM version. Use <code>qwen3</code> models (e.g. Qwen3-8B, Qwen3-14B).</p></div>
       </div>
 
+      <h3 id="download-progress">Download progress</h3>
+      <p>Models are downloaded from HuggingFace on first use and cached locally. Pass an <code>onDownloadProgress</code> callback to track progress. The closure receives a <code>Double</code> from <code>0.0</code> to <code>1.0</code> and is not called if the model is already cached.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-label">Basic usage</span><span class="code-lang">Swift</span></div>
+        <pre><code class="language-swift">let provider = MLXProvider(modelId: "mlx-community/Qwen3-8B-4bit") { progress in
+    print("Downloading: \(Int(progress * 100))%")
+}</code></pre>
+      </div>
+      <p>In SwiftUI, bind the callback to a <code>@State</code> variable to drive a <code>ProgressView</code>:</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-label">SwiftUI progress bar</span><span class="code-lang">Swift</span></div>
+        <pre><code class="language-swift">@State private var downloadProgress: Double = 0
+
+var body: some View {
+    if downloadProgress < 1.0 {
+        ProgressView("Downloading model...", value: downloadProgress)
+    }
+}
+
+// When creating the provider:
+let provider = MLXProvider(modelId: "mlx-community/Qwen3-8B-4bit") { progress in
+    Task { @MainActor in
+        downloadProgress = progress
+    }
+}</code></pre>
+      </div>
+
       <h2 id="hybrid-routing">Hybrid Routing</h2>
       <p>A <code>HybridRouter</code> sits between your agent and its models. For each request it evaluates a policy and picks either the local (MLX) or cloud provider. The agent code is identical either way.</p>
       <p>This is useful when you want fast, private responses for simple tasks and cloud-quality reasoning for complex ones, without writing any branching logic yourself.</p>
