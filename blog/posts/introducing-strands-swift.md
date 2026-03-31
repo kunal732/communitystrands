@@ -1,5 +1,10 @@
 # Bringing AWS Strands Agents to Swift
 
+<figure style="max-width:360px;margin:0 auto 2rem">
+<img src="../images/reinvent-talk.png" alt="Kunal Batra and Du'An Lightfoot at AWS re:Invent" style="width:100%;border-radius:10px">
+<figcaption style="text-align:center;font-size:13px;color:#9399b2;margin-top:0.5rem">Myself and Du'An Lightfoot giving a talk at re:Invent on building agents with AWS Strands</figcaption>
+</figure>
+
 The past year has been an incredible time to be a developer. Agents are quickly moving from demos into production systems people actually rely on.
 
 One framework I've really enjoyed building with during that shift is AWS's [Strands Agents SDK](https://github.com/strands-agents). What stood out to me was how quickly it fit into the systems I already had. I could go from an idea to a working agent and integrate it directly with services like SQS, Lambda, DynamoDB, and S3 without having to build additional orchestration or integration layers. It also emits OpenTelemetry traces out of the box using the GenAI semantic conventions, which makes it easier to verify behavior, monitor performance, and catch issues early.
