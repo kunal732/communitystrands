@@ -1,7 +1,7 @@
 # Bringing AWS Strands Agents to Swift
 
 <figure style="max-width:360px;margin:0 auto 2rem">
-<img src="../images/reinvent-talk.png" alt="Kunal Batra and Du'An Lightfoot at AWS re:Invent" style="width:100%;border-radius:10px">
+<img src="https://raw.githubusercontent.com/kunal732/communitystrands/master/blog/images/reinvent-talk.png" alt="Kunal Batra and Du'An Lightfoot at AWS re:Invent" style="width:100%;border-radius:10px">
 <figcaption style="text-align:center;font-size:13px;color:#9399b2;margin-top:0.5rem">Myself and Du'An Lightfoot giving a talk at re:Invent on building agents with AWS Strands</figcaption>
 </figure>
 
