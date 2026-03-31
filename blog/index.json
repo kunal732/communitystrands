@@ -2,10 +2,10 @@
   "posts": [
     {
       "slug": "introducing-strands-swift",
-      "title": "Introducing the Strands Agents Swift SDK",
-      "date": "2026-03-18",
+      "title": "Bringing AWS Strands Agents to Swift",
+      "date": "2026-03-31",
       "author": "Kunal Batra",
-      "description": "A community Swift port of the AWS Strands Agents SDK with on-device MLX inference, hybrid routing, and OpenTelemetry support.",
+      "description": "A community port of the AWS Strands Agents framework to Swift with on-device MLX inference, hybrid routing, computer use, and OpenTelemetry tracing.",
       "tags": ["announcement", "swift", "mlx", "apple-silicon"]
     }
   ]

@@ -1,97 +1,92 @@
-# Introducing the Strands Agents Swift SDK
+# Bringing AWS Strands Agents to Swift
 
-AWS released the [Strands Agents SDK](https://github.com/strands-agents) earlier this year with official support for Python and TypeScript. The framework is genuinely well-designed: a clean agent loop, composable tools, structured output, multi-agent coordination, and first-class OpenTelemetry support. It is the first agent framework from a major cloud provider that feels like it was built by people who actually write production agents.
+The past year has been an incredible time to be a developer. Agents are quickly moving from demos into production systems people actually rely on.
 
-There was one problem. No Swift.
+One framework I've really enjoyed building with during that shift is AWS's [Strands Agents SDK](https://github.com/strands-agents). What stood out to me was how quickly it fit into the systems I already had. I could go from an idea to a working agent and integrate it directly with services like SQS, Lambda, DynamoDB, and S3 without having to build additional orchestration or integration layers. It also emits OpenTelemetry traces out of the box using the GenAI semantic conventions, which makes it easier to verify behavior, monitor performance, and catch issues early.
 
-If you are building an iOS app, a macOS utility, or anything that runs on Apple hardware, you were either wrapping a Python process, calling a REST API, or reaching for a different framework entirely. None of those are good options when the device in your user's pocket has a Neural Engine that can run a capable language model locally in milliseconds.
+While building with the Python SDK, it became clear that these agentic workflows shouldn't be limited to backend systems. They can be packaged and distributed directly within the applications users operate in every day, which is what led me to bring this experience into the Swift ecosystem.
 
-So we built a Swift port.
+## Introducing the Swift Strands Agents SDK
 
-## What it is
+The [Strands Agents Swift SDK](https://github.com/kunal732/strands-agents-swift) is a community port of the framework for macOS, iOS, and tvOS. It keeps the same core model, agents, tools, and reasoning loop, but adapts it to a very different environment: the device.
 
-The Strands Agents Swift SDK is a community implementation of the Strands framework for Apple platforms. It implements the same core agent concepts as the Python and TypeScript SDKs while adding capabilities that only make sense on Apple hardware.
+It's a single Swift 6 package targeting macOS 14+, iOS 17+, and tvOS 17+. One import, no macros, no Xcode trust prompts.
 
-The core is a Swift 6 package that runs on macOS 14+, iOS 17+, and tvOS 17+. It has no runtime dependencies beyond Foundation for the core module. Cloud provider modules bring in their respective SDKs only if you add them.
-
-## What works today
-
-**Tools via the `@Tool` macro.** Annotate any Swift function and the compiler generates the JSON schema, tool name, and `AgentTool` conformance automatically. The function is still callable directly as regular Swift.
+You define tools as normal Swift functions, wrap them with `Tool()`, and the agent handles the rest.
 
 ```swift
-/// Search the web and return a summary of the results.
-@Tool
-func searchWeb(query: String, maxResults: Int = 5) async throws -> String {
-    // your implementation
+import StrandsAgents
+
+func wordCount(text: String) -> Int {
+    text.split(whereSeparator: \.isWhitespace).count
 }
 
-let agent = Agent(model: provider, tools: [searchWeb])
-```
+let wordCountTool = Tool(wordCount, "Count the number of words in a block of text.")
 
-**Structured output via `@StructuredOutput`.** Annotate a `Codable` struct and the macro synthesizes the `jsonSchema` from stored properties. Optional fields are automatically omitted from `required`. The agent uses a hidden tool to force the model to produce exactly that structure.
+let agent = Agent(
+    model: MLXProvider(modelId: "mlx-community/Qwen3-8B-4bit"),
+    tools: [wordCountTool]
+)
 
-```swift
-@StructuredOutput
-struct Recipe {
-    let name: String
-    let ingredients: [String]
-    let steps: [String]
-    let note: String?
+for try await text in agent.streamText("How many words are in the Gettysburg Address?") {
+    print(text, terminator: "")
 }
-
-let recipe: Recipe = try await agent.runStructured("Give me a pasta recipe")
 ```
 
-**On-device inference with MLX.** Run quantized language models entirely on Apple Silicon. No network, no API keys, no data leaving the device. Models download from HuggingFace and cache locally on first run. Qwen3-8B-4bit produces reliable tool calling and fits comfortably on a MacBook Pro.
+## Running in the Cloud or On-Device
 
-```swift
-import StrandsMLXProvider
+The SDK ships with two providers, both safe for production apps.
 
-let agent = Agent(model: MLXProvider(modelId: "mlx-community/Qwen3-8B-4bit"))
-```
+**AWS Bedrock** handles cloud inference using Amplify and Cognito to issue temporary, scoped credentials. No API keys ever live in your binary.
 
-**Hybrid routing.** A `HybridRouter` sits between your agent and its models and picks local or cloud on every request based on a configurable policy. The policies read real device signals: available RAM (via `vm_statistics64`), thermal state (via `ProcessInfo`), whether the device is on battery, the latency of the previous inference, and estimated prompt token count. You can also pass per-call hints or write a custom policy.
+**MLX** handles on-device inference on Apple Silicon. No network calls, no credentials, and no data leaves the device. Models are pulled from HuggingFace and cached locally on first run.
+
+Providers that require embedding permanent API keys are intentionally excluded.
+
+## Hybrid Routing
+
+A `HybridRouter` sits between your agent and its providers, choosing local or cloud per request based on real device signals like available memory, thermal state, power source, and observed latency.
 
 ```swift
 let agent = Agent(
     router: HybridRouter(
         local: MLXProvider(modelId: "mlx-community/Qwen3-8B-4bit"),
-        cloud: BedrockProvider(...),
+        cloud: try BedrockProvider(config: BedrockConfig(
+            modelId: "us.anthropic.claude-sonnet-4-20250514-v1:0"
+        )),
         policy: LatencySensitivePolicy()
     )
 )
-
-// Hint for one call
-agent.routingHints = RoutingHints(privacySensitive: true)
-let result = try await agent.run("Summarize my health records")
 ```
 
-**OpenTelemetry tracing with GenAI semantic conventions.** Every agent run produces a connected trace tree: `invoke_agent` > `execute_event_loop_cycle` > `chat` + `execute_tool`. All spans are properly linked with parent-child relationships. Token counts, tool status, finish reason, and latency are emitted as span events using the standard `gen_ai.*` attribute names. Point it at Datadog LLM Observability with four lines of configuration.
+## New Possibilities on Apple Devices
 
-**Multi-agent.** Graph (DAG-based parallel pipelines), Swarm (dynamic handoffs between specialists), and A2A (HTTP-based cross-process communication). All three run in a single process on a single device -- the right mental model for an iOS or macOS app. A2A is the bridge to backend agents when you need server compute.
+Running agents natively on Apple Silicon opens up use cases that don't really exist server-side.
 
-**Cloud providers.** AWS Bedrock (ConverseStream), Anthropic, OpenAI, and Google Gemini are all supported as separate modules. None of them are imported unless you add them as dependencies.
+You can run fully local agents that operate over private data without any network calls. You can mix local and cloud inference depending on context. And you can enable computer-use style workflows where the model interacts directly with the system.
 
-## What is different about a Swift agent SDK
+In the demo below, I connected an agent to a local Mac MCP server and had it open Word and write a sentence from a menu bar app. At the end, you can see the full trace in Datadog, showing every tool invocation and span.
 
-The Python and TypeScript SDKs assume a server. The Swift SDK assumes a device. That shapes several design decisions:
+<div class="video-embed">
+<iframe width="100%" height="400" src="https://www.youtube.com/embed/py8PAScf2EQ" frameborder="0" allowfullscreen></iframe>
+</div>
 
-**Privacy is a first-class signal.** On a phone or Mac, your agent might be reading Calendar events, HealthKit data, messages, or documents that should never leave the device. The `privacySensitive` routing hint exists precisely for this -- it forces local inference regardless of what the policy would otherwise decide.
+## Observability Still Matters
 
-**Hardware state matters.** A server's CPU is always available and always plugged in. A phone is not. The routing system reads thermal state, available RAM, and power source. A `FallbackPolicy` configured with a `slowInferenceThresholdMs` will automatically fall back to cloud if local inference is struggling -- no code changes needed.
+Even on-device, the same principles apply. You still need to understand what your agent is doing.
 
-**The Neural Engine is real.** Apple Silicon's unified memory architecture makes local inference genuinely competitive for many tasks. A Qwen3-8B model on an M2 Mac produces results fast enough for interactive use. This is not a gimmick; it is a meaningful capability that does not exist on any other platform the Strands SDK targets.
+Every agent invocation produces a full OpenTelemetry trace, with a hierarchy like:
 
-## What is coming
+```
+invoke_agent
+  └── event_loop_cycle
+        ├── chat
+        └── execute_tool
+```
 
-The SDK covers the core agent fundamentals. The areas we are actively working on:
+Spans follow the GenAI semantic conventions, capturing input/output messages, token counts, latency, and tool execution details. You can inspect traces locally or export them to any OTLP-compatible backend, including Datadog.
 
-- **Kotlin port.** Same design, same feature set, targeting Android and JVM.
-- **Better routing signals.** Prompt complexity classification, not just character count. Cost tracking across a session.
-- **Voice agent improvements.** The bidirectional streaming pipeline exists; we are working on tighter integration with AVFoundation for cleaner iOS audio I/O.
-- **MCP server tooling.** The client is implemented; we want to make it easier to run an MCP server directly from a Swift process.
-
-## Getting started
+## Getting Started
 
 Add the package to your `Package.swift`:
 
@@ -101,6 +96,6 @@ dependencies: [
 ]
 ```
 
-Then read the [Getting Started guide](/docs/getting-started.html) or browse the full [documentation](/docs/index.html).
+Full documentation: [communitystrands.com/swift](https://communitystrands.com/swift/)
 
-The SDK is Apache 2.0 licensed, the same as the upstream Strands SDK. Contributions are welcome.
+Apache 2.0 licensed. Contributions welcome.
