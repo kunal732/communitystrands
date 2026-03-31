@@ -6,7 +6,7 @@
       "date": "2026-03-31",
       "author": "Kunal Batra",
       "description": "A community port of the AWS Strands Agents framework to Swift with on-device MLX inference, hybrid routing, computer use, and OpenTelemetry tracing.",
-      "tags": ["announcement", "swift", "mlx", "apple-silicon"]
+      "tags": ["announcement", "swift", "mlx"]
     }
   ]
 }
