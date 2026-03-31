@@ -40,35 +40,15 @@
       <h1>Streaming</h1>
       <p class="page-description">Display tokens as the model generates them for a responsive UI, rather than waiting for the complete response.</p>
 
-      <h2 id="agent-stream">agent.stream()</h2>
-      <p><code>agent.stream()</code> returns an <code>AsyncStream&lt;StreamEvent&gt;</code>. Iterate it with <code>for try await</code> to receive events as they happen:</p>
+      <h2 id="stream-text">agent.streamText()</h2>
+      <p>The simplest way to stream. Yields every visible token (both thinking and response) as a plain <code>String</code>:</p>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">Swift</span></div>
-        <pre><code class="language-swift">for try await event in agent.stream("Explain how TCP/IP works") {
-    switch event {
-    case .textDelta(let token):
-        print(token, terminator: "")   // each token as it arrives
-    case .result(let final):
-        print("\n\nDone.")
-    default:
-        break
-    }
-}</code></pre>
+        <pre><code class="language-swift">for try await text in agent.streamText("Explain how TCP/IP works") {
+    print(text, terminator: "")
+}
+print()</code></pre>
       </div>
-
-      <h2 id="stream-events">Stream Events</h2>
-      <p>The <code>StreamEvent</code> enum covers every stage of the agent loop:</p>
-      <table>
-        <thead><tr><th>Case</th><th>When it fires</th><th>Associated value</th></tr></thead>
-        <tbody>
-          <tr><td><code>.textDelta(String)</code></td><td>Each token of model text output</td><td>The token string</td></tr>
-          <tr><td><code>.toolUse(ToolUseBlock)</code></td><td>Model decides to call a tool</td><td>Tool name + input</td></tr>
-          <tr><td><code>.toolResult(ToolResultBlock)</code></td><td>Tool execution completes</td><td>Status + output content</td></tr>
-          <tr><td><code>.cycleComplete(CycleMetrics)</code></td><td>One reasoning cycle finishes</td><td>Latency, token counts</td></tr>
-          <tr><td><code>.result(AgentResult)</code></td><td>Final response ready</td><td>Full result + metrics</td></tr>
-          <tr><td><code>.error(Error)</code></td><td>Unrecoverable error</td><td>The error</td></tr>
-        </tbody>
-      </table>
 
       <h2 id="swiftui-example">SwiftUI Example</h2>
       <p>Stream tokens into a <code>@State</code> variable for a typewriter effect:</p>
@@ -89,7 +69,7 @@ struct ContentView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
             }
-            Button(isStreaming ? "Streaming…" : "Ask Agent") {
+            Button(isStreaming ? "Streaming..." : "Ask Agent") {
                 Task { await ask() }
             }
             .disabled(isStreaming)
@@ -100,10 +80,8 @@ struct ContentView: View {
         isStreaming = true
         response = ""
         do {
-            for try await event in agent.stream("Write a short poem about Swift") {
-                if case .textDelta(let token) = event {
-                    response += token
-                }
+            for try await text in agent.streamText("Write a short poem about Swift") {
+                response += text
             }
         } catch {
             response = "Error: \(error.localizedDescription)"
@@ -113,38 +91,36 @@ struct ContentView: View {
 }</code></pre>
       </div>
 
-      <h2 id="tool-visibility">Showing Tool Activity</h2>
-      <p>Use <code>.toolUse</code> and <code>.toolResult</code> events to give users visibility into what the agent is doing:</p>
-      <div class="code-block">
-        <div class="code-header"><span class="code-lang">Swift</span></div>
-        <pre><code class="language-swift">@State private var statusLine = ""
+      <h2 id="agent-stream">agent.stream()</h2>
+      <p>For more control, <code>agent.stream()</code> returns an <code>AsyncThrowingStream&lt;AgentStreamEvent&gt;</code> with typed events for each stage of the agent loop:</p>
+      <table>
+        <thead><tr><th>Case</th><th>When it fires</th><th>Associated value</th></tr></thead>
+        <tbody>
+          <tr><td><code>.textDelta(String)</code></td><td>Each token of model text output</td><td>The token string</td></tr>
+          <tr><td><code>.thinkingDelta(String)</code></td><td>Each token inside a thinking block</td><td>The token string</td></tr>
+          <tr><td><code>.toolResult(ToolResultBlock)</code></td><td>Tool execution completes</td><td>Status + output content</td></tr>
+          <tr><td><code>.contentBlock(ContentBlock)</code></td><td>A complete content block finishes</td><td>Text, tool use, or reasoning block</td></tr>
+          <tr><td><code>.modelMessage(Message)</code></td><td>Full model message assembled</td><td>The complete message</td></tr>
+          <tr><td><code>.result(AgentResult)</code></td><td>Final response ready</td><td>Full result + metrics</td></tr>
+        </tbody>
+      </table>
 
-for try await event in agent.stream(prompt) {
-    switch event {
-    case .textDelta(let token):
-        response += token
-    case .toolUse(let use):
-        statusLine = "Calling \(use.name)…"
-    case .toolResult(let res):
-        statusLine = res.status == .success ? "Tool completed" : "Tool failed"
-    case .result:
-        statusLine = ""
-    default:
-        break
-    }
-}</code></pre>
-      </div>
-
-      <h2 id="metrics-from-stream">Collecting Metrics</h2>
-      <p>The final <code>.result</code> event carries the same <code>AgentResult</code> as a non-streaming <code>run()</code> call, including full metrics:</p>
+      <p>Use this when you want to separate thinking from response, show tool activity, or collect metrics:</p>
       <div class="code-block">
         <div class="code-header"><span class="code-lang">Swift</span></div>
         <pre><code class="language-swift">for try await event in agent.stream(prompt) {
-    if case .result(let final) = event {
-        print("Cycles: \(final.metrics.cycleCount)")
+    switch event {
+    case .textDelta(let text):
+        response += text
+    case .thinkingDelta(let text):
+        thinkingLog += text
+    case .toolResult(let result):
+        statusLine = "Tool \(result.status)"
+    case .result(let final):
         print("Latency: \(final.metrics.totalLatencyMs)ms")
-        print("Tokens/sec: \(final.metrics.outputTokensPerSecond)")
-        print("Total tokens: \(final.usage.totalTokens)")
+        print("Tokens: \(final.usage.totalTokens)")
+    default:
+        break
     }
 }</code></pre>
       </div>
