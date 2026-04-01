@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog | Strands Agents Swift</title>
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    (function(h,o,u,n,d) {
+      h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}}
+      d=o.createElement(u);d.async=1;d.src=n;d.crossOrigin=''
+      n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
+    })(window,document,'script','https://www.datadoghq-browser-agent.com/us1/v6/datadog-rum.js','DD_RUM')
+    window.DD_RUM.onReady(function() {
+      window.DD_RUM.init({
+        clientToken: 'pubc261f160168ba8b6deeafb89573ba6c0',
+        applicationId: 'fca7ce12-b9b8-46c5-9aeb-775968406461',
+        site: 'datadoghq.com',
+        service: 'communitystrands',
+        env: 'prod',
+        version: '0.0.1',
+        sessionSampleRate: 100,
+        sessionReplaySampleRate: 100,
+        trackBfcacheViews: true,
+        defaultPrivacyLevel: 'allow',
+      });
+    })
+  </script>
+</head>
+<body>
+<header></header>
+<div class="layout">
+  <aside id="sidebar"></aside>
+  <main>
+    <article>
+      <div class="breadcrumb"><a href="index.html">Home</a><span class="breadcrumb-sep">›</span>Blog</div>
+      <h1>Blog</h1>
+      <p class="page-description">Updates, guides, and posts from the community.</p>
+      <div id="posts"><p style="color:var(--text-muted);font-size:14px">Loading posts...</p></div>
+    </article>
+  </main>
+  <aside id="toc"></aside>
+</div>
+<script src="nav.js"></script>
+<script>
+const RAW = "https://raw.githubusercontent.com/kunal732/communitystrands/master";
+
+async function loadPosts() {
+  const el = document.getElementById("posts");
+  try {
+    const res = await fetch(`${RAW}/blog/index.json`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const { posts } = await res.json();
+    if (!posts.length) { el.innerHTML = "<p style='color:var(--text-muted)'>No posts yet.</p>"; return; }
+
+    el.innerHTML = posts.map(p => {
+      const date = new Date(p.date).toLocaleDateString("en-US", { year:"numeric", month:"long", day:"numeric" });
+      const tags = (p.tags||[]).map(t => `<span style="font-size:11px;font-weight:500;background:rgba(137,180,250,0.08);color:#89b4fa;border:1px solid rgba(137,180,250,0.2);padding:2px 8px;border-radius:4px;margin-right:4px">${t}</span>`).join("");
+      return `
+        <div style="border:1px solid var(--border);border-radius:10px;padding:1.5rem;margin-bottom:1.25rem;background:rgba(24,24,37,0.5)">
+          <div style="font-size:12.5px;color:var(--text-muted);margin-bottom:0.5rem">${date} &middot; ${p.author}</div>
+          <a href="../blog/post.html?slug=${p.slug}" style="font-size:1.1rem;font-weight:700;color:#e2e2f0;text-decoration:none;display:block;margin-bottom:0.4rem">${p.title}</a>
+          <p style="font-size:13.5px;color:var(--text-dim);line-height:1.6;margin-bottom:0.75rem">${p.description}</p>
+          <div>${tags}</div>
+        </div>`;
+    }).join("");
+  } catch(e) {
+    el.innerHTML = `<p style="color:#f38ba8;font-size:14px">Could not load posts: ${e.message}</p>`;
+  }
+}
+document.addEventListener("DOMContentLoaded", loadPosts);
+</script>
+</body>
+</html>
